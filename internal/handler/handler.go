@@ -25,7 +25,7 @@ func (h *Handler) Shorten(w http.ResponseWriter, r *http.Request) {
 	}
 
 	code := h.service.ShortenURL(url)
-	shortURL := fmt.Sprintf("http://localhost:8080/r/%s", code)
+	shortURL := fmt.Sprintf("http://localhost:8081/r/%s", code)
 
 	fmt.Fprintln(w, shortURL)
 }

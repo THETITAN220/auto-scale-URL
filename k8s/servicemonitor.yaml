@@ -3,11 +3,16 @@ kind: ServiceMonitor
 metadata:
   name: url-shortener-monitor
   labels:
-    release: monitoring   
+    release: monitoring
 spec:
   selector:
     matchLabels:
       app: url-shortener
+
+  namespaceSelector:
+    matchNames:
+      - default
+
   endpoints:
     - port: http
       path: /metrics

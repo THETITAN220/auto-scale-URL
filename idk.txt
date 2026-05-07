@@ -1,0 +1,16 @@
+
+START:
+
+    minikube start
+    
+    kubectl get pods
+    
+    kubectl port-forward svc/monitoring-grafana 3000:80
+    
+    kubectl port-forward svc/monitoring-kube-prometheus-prometheus 9090:9090
+
+TEST:
+
+    kubectl run test-pod --rm -it --image=busybox -- /bin/sh
+    
+    wget -qO- "http://url-shortener-service/shorten?url=https://google.com"

@@ -10,6 +10,6 @@ FROM alpine:latest
 WORKDIR /root/
 COPY --from=builder /app/app .
 
-EXPOSE 8080
+EXPOSE 8081
 
 CMD ["./app"]
