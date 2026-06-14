@@ -14,3 +14,13 @@ TEST:
     kubectl run test-pod --rm -it --image=busybox -- /bin/sh
 
     while true;do wget -qO- "http://url-shortener-service/shorten?url=https://google.com"; sleep 0.1; done;
+    
+    kubectl delete pod traffic-gen --force --grace-period=0
+    kubectl run traffic-gen --image=busybox --restart=Never -- /bin/sh -c "while true; do wget -qO- 'http://url-shortener-service/shorten?url=https://youtube.com'; done"
+    
+    
+    kubectl delete pod traffic-gen --force --grace-period=0
+
+PASSWORD:
+    kubectl get secret monitoring-grafana -o jsonpath="{.data.admin-password}" | base64 --decode
+    8yXqFKp3TSh0g7aft4hJE6EDhpHwlUYWDB2vjYLb

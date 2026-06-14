@@ -1,0 +1,185 @@
+{
+  "dashboard": {
+    "id": null,
+    "uid": "url-shortener-autoscale",
+    "title": "Auto-Scale URL Shortener — DevOps Dashboard",
+    "tags": ["kubernetes","devops","autoscale"],
+    "schemaVersion": 38,
+    "refresh": "10s",
+    "time": { "from": "now-15m", "to": "now" },
+    "timepicker": {},
+    "panels": [
+      {
+        "id": 1, "type": "stat",
+        "title": "Service Health",
+        "description": "Shows UP/DOWN for currently running url-shortener pods",
+        "gridPos": {"h":4,"w":4,"x":0,"y":0},
+        "datasource": {"type":"prometheus","uid":"prometheus"},
+        "options": {"colorMode":"background","graphMode":"none","justifyMode":"center","textMode":"value_and_name","reduceOptions":{"calcs":["lastNotNull"],"values":false}},
+        "fieldConfig": {
+          "defaults": {
+            "color":{"mode":"thresholds"},
+            "mappings":[{"type":"value","options":{"0":{"text":"DOWN","color":"red","index":1},"1":{"text":"UP","color":"green","index":0}}}],
+            "thresholds":{"mode":"absolute","steps":[{"color":"red","value":null},{"color":"green","value":1}]}
+          },
+          "overrides": []
+        },
+        "targets": [{"expr":"up{pod=~\"url-shortener.*\",endpoint=\"http\"}","legendFormat":"{{pod}}","refId":"A","datasource":{"type":"prometheus","uid":"prometheus"}}]
+      },
+      {
+        "id": 2, "type": "stat",
+        "title": "Active Pods  [HPA: 2 min — 10 max]",
+        "description": "Number of healthy pods. HPA auto-scales when CPU > 60%",
+        "gridPos": {"h":4,"w":4,"x":4,"y":0},
+        "datasource": {"type":"prometheus","uid":"prometheus"},
+        "options": {"colorMode":"background","graphMode":"area","justifyMode":"center","textMode":"value_and_name","reduceOptions":{"calcs":["lastNotNull"],"values":false}},
+        "fieldConfig": {
+          "defaults": {
+            "color":{"mode":"thresholds"},
+            "unit":"none","displayName":"Running Pods",
+            "thresholds":{"mode":"absolute","steps":[{"color":"blue","value":null},{"color":"green","value":2},{"color":"orange","value":6},{"color":"red","value":9}]}
+          },
+          "overrides": []
+        },
+        "targets": [{"expr":"count(up{pod=~\"url-shortener.*\",endpoint=\"http\"} == 1)","legendFormat":"Running Pods","refId":"A","datasource":{"type":"prometheus","uid":"prometheus"}}]
+      },
+      {
+        "id": 3, "type": "gauge",
+        "title": "CPU % per Pod  [HPA scale trigger: 60%]",
+        "description": "Current CPU usage. When this crosses 60%, HPA adds a new pod",
+        "gridPos": {"h":4,"w":8,"x":8,"y":0},
+        "datasource": {"type":"prometheus","uid":"prometheus"},
+        "options": {"minVizHeight":75,"minVizWidth":75,"orientation":"auto","reduceOptions":{"calcs":["lastNotNull"],"values":false},"showThresholdLabels":true,"showThresholdMarkers":true},
+        "fieldConfig": {
+          "defaults": {
+            "color":{"mode":"thresholds"},
+            "max":100,"min":0,"unit":"percent","displayName":"{{pod}}",
+            "thresholds":{"mode":"absolute","steps":[{"color":"green","value":null},{"color":"yellow","value":40},{"color":"orange","value":60},{"color":"red","value":80}]}
+          },
+          "overrides": []
+        },
+        "targets": [{"expr":"rate(process_cpu_seconds_total{pod=~\"url-shortener.*\",endpoint=\"http\"}[1m]) * 100","legendFormat":"{{pod}}","refId":"A","datasource":{"type":"prometheus","uid":"prometheus"}}]
+      },
+      {
+        "id": 4, "type": "stat",
+        "title": "Memory per Pod",
+        "description": "Resident memory usage — Go binaries are very lean (~8MB)",
+        "gridPos": {"h":4,"w":5,"x":16,"y":0},
+        "datasource": {"type":"prometheus","uid":"prometheus"},
+        "options": {"colorMode":"background","graphMode":"area","justifyMode":"center","textMode":"value_and_name","reduceOptions":{"calcs":["lastNotNull"],"values":false}},
+        "fieldConfig": {
+          "defaults": {
+            "color":{"mode":"thresholds"},
+            "unit":"bytes","displayName":"{{pod}}",
+            "thresholds":{"mode":"absolute","steps":[{"color":"green","value":null},{"color":"yellow","value":52428800},{"color":"red","value":209715200}]}
+          },
+          "overrides": []
+        },
+        "targets": [{"expr":"process_resident_memory_bytes{pod=~\"url-shortener.*\",endpoint=\"http\"}","legendFormat":"{{pod}}","refId":"A","datasource":{"type":"prometheus","uid":"prometheus"}}]
+      },
+      {
+        "id": 5, "type": "stat",
+        "title": "Goroutines  [Concurrency]",
+        "description": "Go lightweight threads. Each HTTP request runs in a goroutine",
+        "gridPos": {"h":4,"w":3,"x":21,"y":0},
+        "datasource": {"type":"prometheus","uid":"prometheus"},
+        "options": {"colorMode":"background","graphMode":"area","justifyMode":"center","textMode":"value_and_name","reduceOptions":{"calcs":["lastNotNull"],"values":false}},
+        "fieldConfig": {
+          "defaults": {
+            "color":{"mode":"thresholds"},
+            "unit":"short","displayName":"{{pod}}",
+            "thresholds":{"mode":"absolute","steps":[{"color":"blue","value":null},{"color":"green","value":5},{"color":"yellow","value":20},{"color":"red","value":50}]}
+          },
+          "overrides": []
+        },
+        "targets": [{"expr":"go_goroutines{pod=~\"url-shortener.*\",endpoint=\"http\"}","legendFormat":"{{pod}}","refId":"A","datasource":{"type":"prometheus","uid":"prometheus"}}]
+      },
+      {
+        "id": 6, "type": "timeseries",
+        "title": "CPU Usage Over Time  [HPA autoscales above 60% — red line]",
+        "description": "When CPU crosses the red 60% threshold line, the HPA triggers a new pod",
+        "gridPos": {"h":8,"w":12,"x":0,"y":4},
+        "datasource": {"type":"prometheus","uid":"prometheus"},
+        "options": {
+          "legend":{"calcs":["last","max"],"displayMode":"table","placement":"bottom","showLegend":true},
+          "tooltip":{"mode":"multi","sort":"desc"}
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color":{"mode":"palette-classic"},
+            "unit":"percentunit",
+            "custom":{"drawStyle":"line","fillOpacity":20,"gradientMode":"opacity","lineInterpolation":"smooth","lineWidth":2,"showPoints":"never","spanNulls":false,"thresholdsStyle":{"mode":"line+area"}},
+            "thresholds":{"mode":"absolute","steps":[{"color":"transparent","value":null},{"color":"rgba(255,0,0,0.15)","value":0.6}]}
+          },
+          "overrides": []
+        },
+        "targets": [{"expr":"rate(process_cpu_seconds_total{pod=~\"url-shortener.*\",endpoint=\"http\"}[1m])","legendFormat":"{{pod}}","refId":"A","datasource":{"type":"prometheus","uid":"prometheus"}}]
+      },
+      {
+        "id": 7, "type": "timeseries",
+        "title": "Memory Usage Over Time  [Flat = healthy, rising = leak]",
+        "description": "Flat lines mean no memory leak. A constant upward slope would indicate a bug",
+        "gridPos": {"h":8,"w":12,"x":12,"y":4},
+        "datasource": {"type":"prometheus","uid":"prometheus"},
+        "options": {
+          "legend":{"calcs":["last","max"],"displayMode":"table","placement":"bottom","showLegend":true},
+          "tooltip":{"mode":"multi","sort":"desc"}
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color":{"mode":"palette-classic"},
+            "unit":"bytes",
+            "custom":{"drawStyle":"line","fillOpacity":20,"gradientMode":"opacity","lineInterpolation":"smooth","lineWidth":2,"showPoints":"never","spanNulls":false,"thresholdsStyle":{"mode":"off"}},
+            "thresholds":{"mode":"absolute","steps":[{"color":"green","value":null}]}
+          },
+          "overrides": []
+        },
+        "targets": [{"expr":"process_resident_memory_bytes{pod=~\"url-shortener.*\",endpoint=\"http\"}","legendFormat":"{{pod}}","refId":"A","datasource":{"type":"prometheus","uid":"prometheus"}}]
+      },
+      {
+        "id": 8, "type": "timeseries",
+        "title": "Goroutines Over Time  [Spikes = concurrent load]",
+        "description": "Each incoming HTTP request spawns a goroutine. Spikes show load bursts",
+        "gridPos": {"h":7,"w":12,"x":0,"y":12},
+        "datasource": {"type":"prometheus","uid":"prometheus"},
+        "options": {
+          "legend":{"calcs":["last","max"],"displayMode":"table","placement":"bottom","showLegend":true},
+          "tooltip":{"mode":"multi","sort":"desc"}
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color":{"mode":"palette-classic"},
+            "unit":"short",
+            "custom":{"drawStyle":"line","fillOpacity":15,"gradientMode":"opacity","lineInterpolation":"smooth","lineWidth":2,"showPoints":"never","spanNulls":false,"thresholdsStyle":{"mode":"off"}},
+            "thresholds":{"mode":"absolute","steps":[{"color":"green","value":null}]}
+          },
+          "overrides": []
+        },
+        "targets": [{"expr":"go_goroutines{pod=~\"url-shortener.*\",endpoint=\"http\"}","legendFormat":"{{pod}}","refId":"A","datasource":{"type":"prometheus","uid":"prometheus"}}]
+      },
+      {
+        "id": 9, "type": "timeseries",
+        "title": "GC Events/sec  [Garbage Collection = proxy for request rate]",
+        "description": "Go GC fires based on heap pressure from allocations. More requests = more GC",
+        "gridPos": {"h":7,"w":12,"x":12,"y":12},
+        "datasource": {"type":"prometheus","uid":"prometheus"},
+        "options": {
+          "legend":{"calcs":["last","max"],"displayMode":"table","placement":"bottom","showLegend":true},
+          "tooltip":{"mode":"multi","sort":"desc"}
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color":{"mode":"palette-classic"},
+            "unit":"ops",
+            "custom":{"drawStyle":"bars","fillOpacity":70,"gradientMode":"none","lineWidth":1,"showPoints":"never","spanNulls":false,"thresholdsStyle":{"mode":"off"}},
+            "thresholds":{"mode":"absolute","steps":[{"color":"green","value":null}]}
+          },
+          "overrides": []
+        },
+        "targets": [{"expr":"rate(go_gc_duration_seconds_count{pod=~\"url-shortener.*\",endpoint=\"http\"}[1m])","legendFormat":"{{pod}}","refId":"A","datasource":{"type":"prometheus","uid":"prometheus"}}]
+      }
+    ]
+  },
+  "overwrite": true,
+  "folderId": 0
+}
